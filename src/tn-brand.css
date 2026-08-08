@@ -1,0 +1,7 @@
+/* TNPS brand override: school mark is intentionally just TN. */
+.brand > div:nth-child(2),
+.public-school > div:nth-child(2) { display: none !important; }
+.brand { justify-content: flex-start; }
+.brand-mark { width: 44px; height: 44px; font-size: 17px; letter-spacing: .5px; }
+.public-school { justify-content: flex-start; }
+.public-school .brand-mark { width: 48px; height: 48px; font-size: 18px; }
