@@ -2,23 +2,30 @@ export const TNPS_PORTAL_ACCESS = {
   developer: {
     label: 'Developer',
     access: 'full-system',
-    modules: ['all-modules', 'users', 'system-control', 'audit-logs', 'application-settings']
+    modules: ['all-modules', 'users', 'system-control', 'audit-logs', 'application-settings', 'student-attendance', 'teacher-attendance', 'qr-center', 'scanner']
   },
   principal: {
     label: 'Principal',
     access: 'school-management',
-    modules: ['dashboard', 'students', 'teachers', 'qr-attendance', 'attendance', 'academics', 'timetable', 'communication', 'reports', 'settings']
+    modules: ['dashboard', 'students', 'teachers', 'student-attendance', 'teacher-attendance', 'qr-center', 'scanner', 'academics', 'timetable', 'communication', 'reports', 'settings']
   },
   teacher: {
     label: 'Teacher',
     access: 'assigned-work',
-    modules: ['dashboard', 'my-students', 'scan-student', 'attendance', 'homework', 'my-timetable']
+    modules: ['dashboard', 'my-students', 'scanner', 'student-attendance', 'homework', 'my-timetable']
   },
   parent: {
     label: 'Parent',
     access: 'child-only',
     modules: ['home', 'my-child', 'child-qr', 'attendance', 'homework', 'timetable', 'notices']
   }
+};
+
+export const TNPS_ATTENDANCE_MODULES = {
+  studentAttendance: { label: 'Student Attendance', scannerRole: 'teacher', acceptedQrKind: 'student', rule: 'one-successful-scan-per-student-per-day' },
+  teacherAttendance: { label: 'Teacher Attendance', scannerRole: 'principal', acceptedQrKind: 'teacher', rule: 'one-successful-scan-per-teacher-per-day' },
+  qrCenter: { label: 'QR Center', description: 'Generate, view, print and save Student and Teacher QR cards separately.' },
+  scanner: { label: 'Scanner', description: 'Dedicated continuous back-camera scanner. Accepted QR type is determined by portal role.' }
 };
 
 export const TNPS_ID_PREFIXES = {
@@ -39,10 +46,8 @@ export function nextTnpsId(kind, existingPeople = []) {
   return `${prefix}-${String(highest + 1).padStart(5, '0')}`;
 }
 
-// QR codes intentionally carry an opaque identity reference, not a child's home
-// address, parent phone number, Aadhaar number, or other private data. A future
-// server-backed public/emergency lookup can reveal only the minimum information
-// allowed by school policy after authorization.
+// QR payload intentionally contains only an opaque identity reference.
+// Private child details must not be embedded into a publicly scannable QR.
 export function makeQrPayload(person) {
   return JSON.stringify({ issuer: 'TNPS', version: 1, id: person.id, kind: person.kind });
 }
