@@ -6,46 +6,9 @@
     <meta name="theme-color" content="#f7f8fc" />
     <meta name="description" content="TNPS School ERP" />
     <title>TNPS School ERP</title>
-    <link rel="stylesheet" href="/src/tn-brand.css" />
   </head>
   <body>
     <div id="root"></div>
-    <script type="module">
-      // Render the core ERP first. Optional database/enhancement modules must
-      // never be allowed to block the initial page or turn a recoverable
-      // integration error into a completely blank screen.
-      const load = async (label, loader) => {
-        try {
-          await loader();
-        } catch (error) {
-          console.error(`[TNPS] ${label} failed to load`, error);
-        }
-      };
-
-      await load('core app', () => import('/src/main.jsx'));
-
-      // Auth UI can render independently of database hydration.
-      await load('authentication', () => import('/src/auth-bootstrap.js'));
-
-      // Database hydration runs after the UI is mounted and is intentionally
-      // isolated from the first paint.
-      load('database bridge', async () => {
-        const { initDatabaseBridge } = await import('/src/lib/databaseBridge.js');
-        await Promise.race([
-          initDatabaseBridge(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Database bootstrap timeout')), 10000))
-        ]);
-      });
-
-      // Enhancements are optional integrations. One broken enhancement must
-      // not prevent the rest of the ERP from loading.
-      load('ERP enhancements', () => import('/src/tnps-enhancements.js'));
-      load('QR printing', () => import('/src/qr-printing.js'));
-      load('feedback widget', () => import('/src/feedback-widget.js'));
-      load('developer controls', () => import('/src/developer-user-control.js'));
-      load('mobile UI', () => import('/src/tnps-mobile-ui.js'));
-      load('login provisioning', () => import('/src/login-provisioning.js'));
-      load('forced password change', () => import('/src/force-password-change.js'));
-    </script>
+    <script type="module" src="/src/bootstrap.jsx"></script>
   </body>
 </html>
