@@ -1,4 +1,8 @@
 import './tn-brand.css';
+
+// Authentication must initialize before the ERP UI so unauthenticated users
+// never see the dashboard underneath the login screen.
+import './auth-bootstrap.js';
 import './main.jsx';
 
 const load = async (label, loader) => {
@@ -9,10 +13,8 @@ const load = async (label, loader) => {
   }
 };
 
-// React owns the application DOM. Legacy enhancement scripts that directly
-// rewrote React-managed nodes were disabled because they could detach event
-// handlers and freeze navigation after a re-render.
-void load('authentication', () => import('./auth-bootstrap.js'));
+// React owns the application DOM. Optional services are isolated so a failure
+// in one enhancement cannot freeze navigation or blank the entire ERP.
 void load('database bridge', async () => {
   const { initDatabaseBridge } = await import('./lib/databaseBridge.js');
   await Promise.race([
