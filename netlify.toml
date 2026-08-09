@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Vite production assets are generated into dist/.
+# Keep the SPA entry point available for direct navigation and query-based QR pages.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
