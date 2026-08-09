@@ -29,7 +29,6 @@ void (async () => {
   });
   await load('application', () => import('./main.jsx'));
   await load('stability layer', () => import('./tnps-stability.js'));
-  await load('login provisioning', () => import('./login-provisioning.js'));
   if (!db?.authenticated) console.warn('[TNPS] Database is unavailable; local fallback remains active.');
   void auth;
 })();
