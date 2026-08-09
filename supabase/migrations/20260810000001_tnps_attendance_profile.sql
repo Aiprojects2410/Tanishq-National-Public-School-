@@ -5,6 +5,8 @@ alter table public.school_settings add column if not exists early_before_time ti
 alter table public.school_settings add column if not exists late_after_time time default '08:45';
 update public.school_settings set school_start_time=coalesce(school_start_time,'08:30'),early_before_time=coalesce(early_before_time,'08:15'),late_after_time=coalesce(late_after_time,'08:45');
 alter type public.attendance_status add value if not exists 'early';
+drop index if exists public.attendance_student_once_per_day;
+drop index if exists public.attendance_teacher_once_per_day;
 create index if not exists attendance_scanned_by_idx on public.attendance(scanned_by);
 create index if not exists attendance_student_id_idx on public.attendance(student_id);
 create index if not exists attendance_teacher_id_idx on public.attendance(teacher_id);
