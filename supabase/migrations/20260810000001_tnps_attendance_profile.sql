@@ -32,6 +32,11 @@ begin
  if new_id is null then raise exception 'ALREADY_MARKED_TODAY'; end if; return new_id;
 end; $$;
 
+drop policy if exists qr_cards_staff_read on public.qr_cards;
+drop policy if exists qr_cards_manage on public.qr_cards;
+create policy qr_cards_staff_read on public.qr_cards for select to authenticated using ((select public."current_role"()) in ('developer','principal','teacher','parent'));
+create policy qr_cards_manage on public.qr_cards for all to authenticated using ((select public."current_role"()) in ('developer','principal')) with check ((select public."current_role"()) in ('developer','principal'));
+
 drop policy if exists tnps_photos_read_own on storage.objects;
 drop policy if exists tnps_photos_insert_own on storage.objects;
 drop policy if exists tnps_photos_update_own on storage.objects;
