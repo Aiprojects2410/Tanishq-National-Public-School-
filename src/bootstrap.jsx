@@ -37,9 +37,12 @@ const bootstrapDatabase = async () => {
         initDatabaseBridge(),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Database bootstrap timeout')), 10000)),
       ]);
-      window.dispatchEvent(new CustomEvent('tnps-database-ready', { detail: { connected: Boolean(result?.authenticated), authenticated: Boolean(result?.authenticated) } }));
+      const connected = Boolean(result?.authenticated);
+      window.__tnpsDatabaseStatus = connected;
+      window.dispatchEvent(new CustomEvent('tnps-database-ready', { detail: { connected, authenticated: connected } }));
       return result;
     } catch (error) {
+      window.__tnpsDatabaseStatus = false;
       window.dispatchEvent(new CustomEvent('tnps-database-ready', { detail: { connected: false, authenticated: false, error: error?.message } }));
       return null;
     }
@@ -54,7 +57,9 @@ void (async () => {
     if (!retry) showFatal(new Error('Application module failed to load after a clean session retry'));
   }
   await load('forced password change', () => import('./force-password-change.js'));
-  await load('control center', () => import('./tnps-control-center.js'));
+  // The legacy control-center module directly mutated React-owned DOM nodes and
+  // was the source of the recurring removeChild runtime crashes and duplicate
+  // database indicators. Its functionality is no longer loaded into the app.
   await load('ui stabilization', () => import('./tnps-ui-stabilizer.js'));
   window.addEventListener('tnps-auth-ready', bootstrapDatabase, { once: true });
 })();

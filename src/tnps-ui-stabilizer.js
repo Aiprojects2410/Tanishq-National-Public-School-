@@ -1,9 +1,10 @@
 // TNPS visual status helpers.
-// React owns the application DOM. This module only adds CSS and listens for real
-// database status events, so it never inserts/removes React-managed nodes.
+// React owns the application DOM. This module only adds CSS and reads the
+// persisted runtime database status, so it never inserts/removes React nodes.
 (() => {
   const setStatus = (connected) => {
-    document.documentElement.style.setProperty('--tnps-db-status', JSON.stringify(connected === null ? 'Checking database…' : connected ? 'Connected' : 'Disconnected'));
+    const value = connected === null ? 'Checking database…' : connected ? 'Connected' : 'Disconnected';
+    document.documentElement.style.setProperty('--tnps-db-status', JSON.stringify(value));
     document.documentElement.style.setProperty('--tnps-db-color', connected === null ? '#7d8799' : connected ? '#8b5cf6' : '#c74e58');
   };
 
@@ -18,10 +19,6 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    /* The old control-center status was hard-coded to Connected. Hide that node
-       completely. The single status shown below comes from the real DB event. */
-    .top-actions > .tn-db-status { display:none !important; }
-
     .top-actions::before {
       content: '● ' var(--tnps-db-status, 'Checking database…');
       color: var(--tnps-db-color, #7d8799);
@@ -30,14 +27,12 @@
       white-space: nowrap;
       margin-right: 8px;
     }
-
     .main:has(.welcome) .topbar h1 { font-size: 0 !important; }
     .main:has(.welcome) .topbar h1::after {
       content: var(--tnps-dashboard-greeting, 'Good morning 👋');
       font-size: clamp(28px, 4vw, 42px);
       line-height: 1.1;
     }
-
     @media (max-width: 680px) {
       .top-actions::before { font-size: 9px; margin-right: 2px; }
       .main:has(.welcome) .topbar h1::after { font-size: 30px; }
@@ -45,12 +40,12 @@
   `;
   document.head.appendChild(style);
 
+  const initialStatus = typeof window.__tnpsDatabaseStatus === 'boolean' ? window.__tnpsDatabaseStatus : null;
+  setStatus(initialStatus);
   window.addEventListener('tnps-database-ready', (event) => {
-    setStatus(event.detail?.connected === true);
+    const connected = event.detail?.connected;
+    setStatus(connected === true ? true : connected === false ? false : null);
   });
-
-  // Never claim a connection before the real runtime check reports one.
-  setStatus(null);
   setGreeting();
   window.setInterval(setGreeting, 60_000);
 })();
