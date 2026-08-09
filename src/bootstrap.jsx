@@ -9,9 +9,9 @@ const load = async (label, loader) => {
   }
 };
 
-// Keep React in control of its own DOM. Earlier enhancement scripts were
-// directly rewriting React-managed tables/panels, which could detach React's
-// event handlers and make navigation appear frozen, especially on mobile.
+// React owns the application DOM. Legacy enhancement scripts that directly
+// rewrote React-managed nodes were disabled because they could detach event
+// handlers and freeze navigation after a re-render.
 void load('authentication', () => import('./auth-bootstrap.js'));
 void load('database bridge', async () => {
   const { initDatabaseBridge } = await import('./lib/databaseBridge.js');
@@ -20,4 +20,5 @@ void load('database bridge', async () => {
     new Promise((_, reject) => setTimeout(() => reject(new Error('Database bootstrap timeout')), 10000)),
   ]);
 });
+void load('forced password change', () => import('./force-password-change.js'));
 void load('runtime fixes', () => import('./runtime-fixes.js'));
