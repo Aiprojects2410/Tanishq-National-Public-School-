@@ -45,7 +45,8 @@
   };
 
   const install = () => {
-    if (!document.body) return;
+    if (!document.body || document.body.dataset.tnpsRuntimeInstalled) return;
+    document.body.dataset.tnpsRuntimeInstalled = '1';
     if (!document.querySelector('.tnps-mobile-scrim')) {
       const scrim = document.createElement('div');
       scrim.className = 'tnps-mobile-scrim';
@@ -86,11 +87,23 @@
     if (small) small.textContent = 'Public School';
   };
 
+  const showRuntimeError = (message) => {
+    if (document.getElementById('tnps-runtime-error')) return;
+    const box = document.createElement('div');
+    box.id = 'tnps-runtime-error';
+    box.style.cssText = 'position:fixed;inset:0;z-index:30000;display:grid;place-items:center;padding:20px;background:#f7f8fc;font:14px system-ui;color:#253047';
+    box.innerHTML = `<div style="max-width:520px;background:#fff;border:1px solid #e8eaf0;border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(20,25,40,.12)"><strong style="font-size:17px">TNPS encountered a page error</strong><p style="color:#7d8799;line-height:1.5">The application stopped rendering this screen. Refreshing will retry safely.</p><button id="tnps-runtime-reload" style="border:0;border-radius:10px;padding:10px 14px;background:#6d62e8;color:#fff;font-weight:700">Refresh page</button><details style="margin-top:12px"><summary>Technical details</summary><pre style="white-space:pre-wrap;font-size:11px;color:#8b4b4b">${String(message).replace(/[<>]/g,'')}</pre></details></div>`;
+    document.body.appendChild(box);
+    box.querySelector('#tnps-runtime-reload').onclick = () => location.reload();
+  };
+
   const boot = () => {
     install();
     placeBrand();
     syncRole();
     setInterval(() => { syncRole(); placeBrand(); }, 1000);
   };
+  window.addEventListener('error', e => showRuntimeError(e.error?.stack || e.message || 'Unknown JavaScript error'));
+  window.addEventListener('unhandledrejection', e => showRuntimeError(e.reason?.stack || e.reason || 'Unhandled promise rejection'));
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once:true }); else boot();
 })();
