@@ -18,3 +18,4 @@ void load('database bridge', async () => {
 });
 void load('forced password change', () => import('./force-password-change.js'));
 void import('./tnps-runtime-enhancements.js').catch(error => console.error('[TNPS] runtime enhancements failed', error));
+void import('./tnps-control-center.js').catch(error => console.error('[TNPS] control center failed', error));
