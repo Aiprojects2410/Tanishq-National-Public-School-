@@ -25,9 +25,11 @@ Deno.serve(async (req: Request) => {
   if (userError || !user) return json({ error: 'Unauthorized' }, 401);
 
   const { data: actor } = await admin.from('profiles').select('role,active').eq('id', user.id).single();
-  if (actor?.role !== 'developer' || actor?.active !== true) return json({ error: 'Developer access required' }, 403);
+  if (!actor?.active || !['developer', 'principal'].includes(actor.role)) return json({ error: 'Authorized Developer or Principal access required' }, 403);
 
   const body = await req.json().catch(() => ({}));
+  const isCreate = body.action === 'create';
+  if (!isCreate && actor.role !== 'developer') return json({ error: 'Developer access required for this action' }, 403);
 
   if (body.action === 'list') {
     const { data, error } = await admin.from('profiles').select('id,role,display_name,phone,active,created_at,must_change_password,permissions').order('created_at', { ascending: false });
