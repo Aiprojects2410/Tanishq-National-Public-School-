@@ -56,6 +56,7 @@ void (async () => {
     const retry = await load('application retry', () => import('./main.jsx'));
     if (!retry) showFatal(new Error('Application module failed to load after a clean session retry'));
   }
+  await load('ID-only login controls', () => import('./login-id-only.js'));
   await load('forced password change', () => import('./force-password-change.js'));
   // The legacy control-center module directly mutated React-owned DOM nodes and
   // was the source of the recurring removeChild runtime crashes and duplicate
