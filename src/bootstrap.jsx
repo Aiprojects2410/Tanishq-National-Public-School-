@@ -58,9 +58,6 @@ void (async () => {
   }
   await load('ID-only login controls', () => import('./login-id-only.js'));
   await load('forced password change', () => import('./force-password-change.js'));
-  // The legacy control-center module directly mutated React-owned DOM nodes and
-  // was the source of the recurring removeChild runtime crashes and duplicate
-  // database indicators. Its functionality is no longer loaded into the app.
   await load('ui stabilization', () => import('./tnps-ui-stabilizer.js'));
   window.addEventListener('tnps-auth-ready', bootstrapDatabase, { once: true });
 })();

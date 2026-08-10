@@ -25,13 +25,15 @@ import { supabase, supabaseConfigured, checkSupabaseDatabaseService, getCurrentP
   const setBusy=(root,busy)=>{root.classList.toggle('auth-loading',busy);root.querySelectorAll('button,input').forEach(node=>{node.disabled=busy;});};
   const setDatabaseStatus=(root,connected)=>{const node=root.querySelector('#tnps-database-status');if(!node)return;node.className=`auth-status ${connected===null?'auth-status-checking':connected?'auth-status-ok':'auth-status-off'}`;node.innerHTML=`<span class="auth-status-dot"></span><span>${connected===null?'Checking database…':connected?'Connected':'Disconnected'}</span>`;};
   const publishDatabaseStatus=(connected)=>{window.__tnpsDatabaseStatus=connected;window.dispatchEvent(new CustomEvent('tnps-database-ready',{detail:{connected,authenticated:false}}));};
+  const internalLoginEmail=identifier=>`${String(identifier||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'')}@login.tnps.local`;
   const resolveLoginEmails=async identifier=>{
     const value=String(identifier||'').trim();
     if(!value)return [];
     if(value.includes('@'))return [value];
-    const {data,error}=await supabase.rpc('resolve_tnps_login_identifier',{p_identifier:value});
-    if(error)throw error;
-    return [...new Set((data||[]).map(row=>row?.email).filter(Boolean))].slice(0,3);
+    const candidates=[];
+    try{const {data,error}=await supabase.rpc('resolve_tnps_login_identifier',{p_identifier:value});if(!error)candidates.push(...(data||[]).map(row=>row?.email).filter(Boolean));}catch{}
+    candidates.push(internalLoginEmail(value));
+    return [...new Set(candidates)].slice(0,4);
   };
   const setup=(databaseConnected=null)=>{
     if(document.getElementById(ID)){setDatabaseStatus(document.getElementById(ID),databaseConnected);return;}
@@ -43,22 +45,6 @@ import { supabase, supabaseConfigured, checkSupabaseDatabaseService, getCurrentP
     requestAnimationFrame(()=>email.focus({preventScroll:true}));
   };
   const unlock=async root=>{const result=await getCurrentProfile();if(result.error||!result.profile?.active){setBusy(root,false);message(root,result.error?.message||'No active TNPS profile was found.');let retry=root.querySelector('.auth-retry');if(!retry){retry=document.createElement('button');retry.type='button';retry.className='auth-btn auth-retry';retry.textContent='Retry profile check';retry.onclick=()=>unlock(root);root.querySelector('.auth-card')?.appendChild(retry);}return;}const role=result.profile.role;if(!['developer','principal','teacher','parent'].includes(role)){await supabase.auth.signOut();setBusy(root,false);message(root,'Your TNPS role is not valid. Contact the Developer.');return;}localStorage.setItem('tnps-auth-role',role);cache(result.profile,result.user);window.dispatchEvent(new CustomEvent('tnps-auth-ready',{detail:{role}}));remove();};
-  const boot=async()=>{
-    if(!supabaseConfigured){setup(false);publishDatabaseStatus(false);return;}
-    setup(null);
-    try{
-      const connected=await Promise.race([
-        checkSupabaseDatabaseService(5000),
-        new Promise(resolve=>window.setTimeout(()=>resolve(false),6500)),
-      ]);
-      const value=connected===true;
-      const root=document.getElementById(ID);if(root)setDatabaseStatus(root,value);
-      publishDatabaseStatus(value);
-    }catch{
-      const root=document.getElementById(ID);if(root)setDatabaseStatus(root,false);
-      publishDatabaseStatus(false);
-    }
-    try{const {data,error}=await Promise.race([supabase.auth.getUser(),new Promise((_,reject)=>window.setTimeout(()=>reject(new Error('Authentication bootstrap timeout')),5000))]);if(error||!data.user)return;const result=await getCurrentProfile();if(result.profile?.active&&['developer','principal','teacher','parent'].includes(result.profile.role)){localStorage.setItem('tnps-auth-role',result.profile.role);cache(result.profile,result.user);window.dispatchEvent(new CustomEvent('tnps-auth-ready',{detail:{role:result.profile.role}}));remove();}}catch{/* Login UI remains available. */}
-  };
+  const boot=async()=>{if(!supabaseConfigured){setup(false);publishDatabaseStatus(false);return;}setup(null);try{const connected=await Promise.race([checkSupabaseDatabaseService(5000),new Promise(resolve=>window.setTimeout(()=>resolve(false),6500))]);const value=connected===true;const root=document.getElementById(ID);if(root)setDatabaseStatus(root,value);publishDatabaseStatus(value);}catch{const root=document.getElementById(ID);if(root)setDatabaseStatus(root,false);publishDatabaseStatus(false);}try{const {data,error}=await Promise.race([supabase.auth.getUser(),new Promise((_,reject)=>window.setTimeout(()=>reject(new Error('Authentication bootstrap timeout')),5000))]);if(error||!data.user)return;const result=await getCurrentProfile();if(result.profile?.active&&['developer','principal','teacher','parent'].includes(result.profile.role)){localStorage.setItem('tnps-auth-role',result.profile.role);cache(result.profile,result.user);window.dispatchEvent(new CustomEvent('tnps-auth-ready',{detail:{role:result.profile.role}}));remove();}}catch{}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else void boot();
 })();
